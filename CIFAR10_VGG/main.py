@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
-from torchvision.models import vgg11, vgg11_bn
+from torchvision.models import vgg11, vgg11_bn, VGG11_Weights
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -106,6 +106,13 @@ def main():
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     model = vgg11().to(device)
+    for m in model.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(
+                m.weight, mode='fan_out', nonlinearity='relu')
+        elif isinstance(m, nn.BatchNorm2d):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
     optimizer = optim.Adam(model.parameters(), lr=2e-4, betas=(0.5, 0.999))
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
