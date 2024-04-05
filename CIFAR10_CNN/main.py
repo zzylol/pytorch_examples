@@ -15,7 +15,7 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, 3, 1)
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(64*14*14, 128) 
+        self.fc1 = nn.Linear(64*14*14, 128)
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
@@ -59,8 +59,10 @@ def test(model, device, test_loader):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            # sum up batch loss
+            test_loss += F.nll_loss(output, target, reduction='sum').item()
+            # get the index of the max log-probability
+            pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
@@ -117,15 +119,15 @@ def main():
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
 
-    transform=transforms.Compose([
+    transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
-        ])
+    ])
     dataset1 = datasets.CIFAR10('../data', train=True, download=True,
-                       transform=transform)
+                                transform=transform)
     dataset2 = datasets.CIFAR10('../data', train=False,
-                       transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
+                                transform=transform)
+    train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     model = Net().to(device)
