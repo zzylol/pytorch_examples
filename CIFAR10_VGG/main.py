@@ -11,12 +11,16 @@ from torchvision.models import vgg11, vgg11_bn, VGG11_Weights
 
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
+    loss_func = nn.CrossEntropyLoss()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)
+        # print(output.size())
+        # print(target)
+        loss = loss_func(output, target)
         loss.backward()
+        # print(model.classifier[-1].bias.grad)
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -105,24 +109,18 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
-    model = vgg11().to(device)
-    for m in model.modules():
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(
-                m.weight, mode='fan_out', nonlinearity='relu')
-        elif isinstance(m, nn.BatchNorm2d):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
-    optimizer = optim.Adam(model.parameters(), lr=2e-4, betas=(0.5, 0.999))
+    model = vgg11(init_weights=True, num_classes=10).to(device)
 
-    scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.5, 0.999))
+
+    # scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
         test(model, device, test_loader)
-        scheduler.step()
+        # scheduler.step()
 
     if args.save_model:
-        torch.save(model.state_dict(), "CIFAR10_cnn.pt")
+        torch.save(model.state_dict(), "CIFAR10_vgg11.pt")
 
 
 if __name__ == '__main__':
